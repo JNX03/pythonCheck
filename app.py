@@ -49,11 +49,22 @@ def check_answer():
             local_vars = {'input_value': tc}
             user_stdout = io.StringIO()
             sys.stdout = user_stdout
+            
+            # Simulate input() with StringIO
+            user_input = io.StringIO(str(tc) + "\n")
+            sys.stdin = user_input
+            
             exec(user_code, {}, local_vars)
+            
+            # Reset stdin and stdout
             sys.stdout = sys.__stdout__
+            sys.stdin = sys.__stdin__
+            
             user_answers.append(user_stdout.getvalue())
     except Exception as e:
         error_message = traceback.format_exc()
+        sys.stdout = sys.__stdout__
+        sys.stdin = sys.__stdin__
 
     score = 0
     feedback = ""
