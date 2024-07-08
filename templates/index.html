@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Checker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Exercise Checker</h1>
+        <form id="exercise-form">
+            <label for="question_type">Select Exercise:</label>
+            <select id="question_type" name="question_type">
+                <option value="even_odd">Even or Odd</option>
+                <option value="print_numbers">Print Numbers</option>
+                <option value="sum_first_n">Sum of First N Numbers</option>
+                <option value="multiplication_table">Multiplication Table</option>
+            </select>
+            <label for="user_code">Your Code:</label>
+            <textarea id="user_code" name="user_code" required style="height: 300px;"></textarea>
+            <p>Please assign the result to the variable 'result' in your code.</p>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="result">
+            <p>Score: <span id="score"></span></p>
+            <p>Feedback: <span id="feedback"></span></p>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
