@@ -14,12 +14,19 @@ document.getElementById('exercise-form').addEventListener('submit', function(eve
             user_code: userCode
         }),
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        document.getElementById('score').textContent = data.score;
-        document.getElementById('feedback').textContent = data.feedback;
+        document.getElementById('score').textContent = data.score !== undefined ? data.score : 'N/A';
+        document.getElementById('feedback').textContent = data.feedback || 'No feedback available';
     })
     .catch((error) => {
         console.error('Error:', error);
+        document.getElementById('score').textContent = 'Error';
+        document.getElementById('feedback').textContent = `An error occurred: ${error.message}`;
     });
 });
