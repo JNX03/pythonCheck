@@ -93,7 +93,7 @@ def check_answer():
     error_message = ""
 
     try:
-        for tc in test_cases[question_type][:5]:
+        for tc in test_cases[question_type][:5]:  # Only show the first 5 test cases to the user
             local_vars = {'input_value': tc}
             user_stdout = io.StringIO()
             sys.stdout = user_stdout
@@ -137,7 +137,8 @@ def check_answer():
                 elif ua.strip() == ca.strip()[::-1]:
                     feedback += "Note: Your output is reversed.\n"
                 else:
-                    feedback += "Your output differs significantly from the expected result.\n"        hidden_test_cases = correct_answers[question_type][5:]
+                    feedback += "Your output differs significantly from the expected result.\n"
+                    hidden_test_cases = correct_answers[question_type][5:]
         hidden_user_answers = []
 
         try:
