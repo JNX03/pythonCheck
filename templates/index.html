@@ -7,11 +7,15 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Exercise Checker</h1>
-        <form id="exercise-form">
-            <label for="question_type">Select Exercise:</label>
-            <select id="question_type" name="question_type">
+    <div class="navigation">
+        <span>User: <span id="username">{{ username }}</span></span>
+        <span class="course">CS01X/wJnx03</span>
+    </div>
+
+    <div class="content">
+        <div class="question-section">
+            <h2>Question Number</h2>
+            <select id="question_type" name="question_type" onchange="updateQuestionDetails()">
                 <option value="even_odd">Even or Odd</option>
                 <option value="print_numbers">Print Numbers</option>
                 <option value="sum_first_n">Sum of First N Numbers</option>
@@ -21,16 +25,42 @@
                 <option value="is_prime">Check Prime Number</option>
                 <option value="print_odd_numbers">Print Odd Numbers</option>
             </select>
-            <label for="user_code">Your Code:</label>
-            <textarea id="user_code" name="user_code" required style="height: 300px;"></textarea>
-            <p>Please assign the result to the variable 'result' in your code.</p>
-            <button type="submit">Submit</button>
-        </form>
-        <div id="result">
-            <p>Score: <span id="score"></span></p>
-            <p>Feedback: <span id="feedback"></span></p>
+            <div id="question_details">
+                <h3>Details</h3>
+                <p id="question_text">Select an exercise to view the question.</p>
+                <h4>Example Test Case:</h4>
+                <p id="example_input"><strong>Input:</strong></p>
+                <p id="example_output"><strong>Output:</strong></p>
+            </div>
+            <textarea id="user_code" name="user_code" required placeholder="Enter your code here..."></textarea>
+            <button type="submit" onclick="submitCode()">Submit</button>
+        </div>
+
+        <div class="leaderboard-section">
+            <h2>Leaderboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Username</th>
+                        <th>Score</th>
+                        <th>Attempts</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard_data">
+                    <!-- Leaderboard data will be populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
+
+    <div class="result-section">
+        <h3>Result:</h3>
+        <p>Score: <span id="score">N/A</span></p>
+        <p>Feedback: <span id="feedback">N/A</span></p>
+    </div>
+
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
     <script src="/static/script.js"></script>
 </body>
 </html>
