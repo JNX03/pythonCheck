@@ -5,6 +5,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exercise Checker</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Initial styles for the page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .cheating-detected {
+            background-color: red !important;
+            color: white !important;
+        }
+        .cheating-detected h1, .cheating-detected h2, .cheating-detected p, .cheating-detected div {
+            color: white !important;
+        }
+        .cheating-warning {
+            display: none;
+            text-align: center;
+            font-size: 2em;
+            margin-top: 20%;
+        }
+        .cheating-detail {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        let cheatingDetected = false;
+
+        document.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            console.log("Right-Click Detected");
+            //triggerCheatingDetected("Right-click detected");
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                triggerCheatingDetected(`DevTools (F12, Ctrl+Shift+I/J, or Ctrl+U) detected`);
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                triggerCheatingDetected("Tab or window switching detected");
+            }
+        });
+
+        function triggerCheatingDetected(reason) {
+            if (!cheatingDetected) {
+                cheatingDetected = true;
+                document.body.classList.add('cheating-detected');
+                document.body.innerHTML = '';
+
+                const warning = document.createElement('div');
+                warning.classList.add('cheating-warning');
+                warning.innerText = 'WARNING: CHEATING DETECTED';
+
+                const detail = document.createElement('div');
+                detail.classList.add('cheating-detail');
+                detail.innerText = `Reason: ${reason}`;
+
+                document.body.appendChild(warning);
+                document.body.appendChild(detail);
+                warning.style.display = 'block';
+                detail.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                triggerCheatingDetected("View Source (Ctrl+U) detected");
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J'))) {
+                e.preventDefault();
+                triggerCheatingDetected(`DevTools (F12 or Ctrl+Shift+I/J) detected`);
+            }
+        });
+
+        function obscureNetworkDetails() {
+            if (window.XMLHttpRequest) {
+                const originalXHROpen = window.XMLHttpRequest.prototype.open;
+                window.XMLHttpRequest.prototype.open = function() {
+                    console.log('Network request intercepted');
+                    return originalXHROpen.apply(this, arguments);
+                };
+            }
+        }
+        obscureNetworkDetails();
+
+        window.onbeforeunload = function() {
+            return "Are you sure you want to leave this page? Your progress may be lost.";
+        };
+    </script>
 </head>
 <body>
     <div class="navigation">
@@ -48,7 +150,6 @@
                     </tr>
                 </thead>
                 <tbody id="leaderboard_data">
-                    <!-- Leaderboard data will be populated here -->
                 </tbody>
             </table>
         </div>

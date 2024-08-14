@@ -4,12 +4,24 @@ import traceback
 import io
 import sys
 import shelve
+import random
+import multiprocessing
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-socketio = SocketIO(app)
 
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["500 per minute"]
+)
+
+socketio = SocketIO(app)
 leaderboard_db = 'leaderboard.db'
+
+forbidden_patterns = ["eval(", "exec(", "import os", "import sys"]
 
 def check_even_odd(n):
     return "Even\n" if n % 2 == 0 else "Odd\n"
@@ -40,6 +52,21 @@ def is_prime(n):
 def print_odd_numbers(n):
     return ''.join([f"{i}\n" for i in range(1, n + 1) if i % 2 != 0])
 
+def execute_user_code(user_code, test_case):
+    local_vars = {'input_value': test_case}
+    user_stdout = io.StringIO()
+    sys.stdout = user_stdout
+
+    user_input = io.StringIO(str(test_case) + "\n")
+    sys.stdin = user_input
+
+    exec(user_code, {}, local_vars)
+
+    sys.stdout = sys.__stdout__
+    sys.stdin = sys.__stdin__
+
+    return user_stdout.getvalue()
+
 @app.route('/')
 def index():
     user_id = request.cookies.get('user_id')
@@ -60,6 +87,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/check_answer', methods=['POST'])
+@limiter.limit("500 per minute")
 def check_answer():
     data = request.json
     user_id = data['user_id']
@@ -67,15 +95,22 @@ def check_answer():
     question_type = data['question_type']
     user_code = data['user_code']
 
+    for pattern in forbidden_patterns:
+        if pattern in user_code:
+            return jsonify({
+                'score': 0,
+                'feedback': f'Your code contains a forbidden pattern: {pattern}'
+            })
+
     test_cases = {
-        'even_odd': [4, 7, 10, 15, 100, 0, -3, 23, 56, 78, 91, 12, 35, 68, 90, 102, 7, 14, 19, 21],
-        'print_numbers': [5, 3, 7, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90],
-        'sum_first_n': [5, 10, 3, 100, 50, 25, 75, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300],
-        'multiplication_table': [3, 5, 12, 15, 7, 9, 11, 14, 17, 19, 2, 4, 6, 8, 10, 13, 16, 18, 20, 21],
-        'reverse_number': [123, 4567, 890, 1001, 765, 234, 987, 4321, 8765, 56789, 654321, 123456, 987654, 111111, 222222, 333333, 444444, 555555, 666666, 777777],
-        'sum_of_digits': [123, 4567, 890, 1001, 765, 234, 987, 4321, 8765, 56789, 654321, 123456, 987654, 111111, 222222, 333333, 444444, 555555, 666666, 777777],
-        'is_prime': [7, 10, 29, 1, 0, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71],
-        'print_odd_numbers': [10, 7, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+        'even_odd': random.sample([4, 7, 10, 15, 100, 0, -3, 23, 56, 78, 91, 12, 35, 68, 90, 102, 7, 14, 19, 21], 10),
+        'print_numbers': random.sample([5, 3, 7, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90], 10),
+        'sum_first_n': random.sample([5, 10, 3, 100, 50, 25, 75, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300], 10),
+        'multiplication_table': random.sample([3, 5, 12, 15, 7, 9, 11, 14, 17, 19, 2, 4, 6, 8, 10, 13, 16, 18, 20, 21], 10),
+        'reverse_number': random.sample([123, 4567, 890, 1001, 765, 234, 987, 4321, 8765, 56789, 654321, 123456, 987654, 111111, 222222, 333333, 444444, 555555, 666666, 777777], 10),
+        'sum_of_digits': random.sample([123, 4567, 890, 1001, 765, 234, 987, 4321, 8765, 56789, 654321, 123456, 987654, 111111, 222222, 333333, 444444, 555555, 666666, 777777], 10),
+        'is_prime': random.sample([7, 10, 29, 1, 0, 11, 13, 17, 19, 23, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71], 10),
+        'print_odd_numbers': random.sample([10, 7, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100], 10)
     }
 
     correct_answers = {
@@ -93,24 +128,27 @@ def check_answer():
     error_message = ""
 
     try:
-        for tc in test_cases[question_type][:5]:  # Only show the first 5 test cases to the user
-            local_vars = {'input_value': tc}
-            user_stdout = io.StringIO()
-            sys.stdout = user_stdout
-            
-            user_input = io.StringIO(str(tc) + "\n")
-            sys.stdin = user_input
-            
-            exec(user_code, {}, local_vars)
-            
-            sys.stdout = sys.__stdout__
-            sys.stdin = sys.__stdin__
-            
-            user_answers.append(user_stdout.getvalue())
+        for tc in test_cases[question_type][:5]:
+            process = multiprocessing.Process(target=execute_user_code, args=(user_code, tc))
+            process.start()
+            process.join(5)
+
+            if process.is_alive():
+                process.terminate()
+                process.join()
+                return jsonify({
+                    'score': 0,
+                    'feedback': 'Code execution time exceeded. Please optimize your code.'
+                })
+
+            user_answers.append(execute_user_code(user_code, tc))
     except Exception as e:
         error_message = traceback.format_exc()
-        sys.stdout = sys.__stdout__
-        sys.stdin = sys.__stdin__
+
+        return jsonify({
+            'score': 0,
+            'feedback': f'Error in code execution: {error_message}'
+        })
 
     score = 0
     feedback = ""
@@ -138,28 +176,15 @@ def check_answer():
                     feedback += "Note: Your output is reversed.\n"
                 else:
                     feedback += "Your output differs significantly from the expected result.\n"
-                    hidden_test_cases = correct_answers[question_type][5:]
+
+        hidden_test_cases = correct_answers[question_type][5:]
         hidden_user_answers = []
 
         try:
             for tc in test_cases[question_type][5:]:
-                local_vars = {'input_value': tc}
-                user_stdout = io.StringIO()
-                sys.stdout = user_stdout
-                
-                user_input = io.StringIO(str(tc) + "\n")
-                sys.stdin = user_input
-                
-                exec(user_code, {}, local_vars)
-                
-                sys.stdout = sys.__stdout__
-                sys.stdin = sys.__stdin__
-                
-                hidden_user_answers.append(user_stdout.getvalue())
+                hidden_user_answers.append(execute_user_code(user_code, tc))
         except Exception as e:
             error_message = traceback.format_exc()
-            sys.stdout = sys.__stdout__
-            sys.stdin = sys.__stdin__
 
         if not error_message:
             for i, (ua, ca) in enumerate(zip(hidden_user_answers, hidden_test_cases)):
