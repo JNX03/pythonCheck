@@ -93,7 +93,7 @@ def check_answer():
     error_message = ""
 
     try:
-        for tc in test_cases[question_type][:5]:  # Only show the first 5 test cases to the user
+        for tc in test_cases[question_type][:5]:
             local_vars = {'input_value': tc}
             user_stdout = io.StringIO()
             sys.stdout = user_stdout
@@ -137,10 +137,7 @@ def check_answer():
                 elif ua.strip() == ca.strip()[::-1]:
                     feedback += "Note: Your output is reversed.\n"
                 else:
-                    feedback += "Your output differs significantly from the expected result.\n"
-
-        # Use the remaining 15 test cases to calculate the final score
-        hidden_test_cases = correct_answers[question_type][5:]
+                    feedback += "Your output differs significantly from the expected result.\n"        hidden_test_cases = correct_answers[question_type][5:]
         hidden_user_answers = []
 
         try:
@@ -168,7 +165,6 @@ def check_answer():
                 if normalize_output(ua) == normalize_output(ca):
                     score += 10 / len(hidden_test_cases)
 
-    # Update leaderboard and store it persistently for the specific question type
     with shelve.open(leaderboard_db) as db:
         leaderboard = db.get(f'leaderboard_{question_type}', [])
 
@@ -182,7 +178,7 @@ def check_answer():
                 'username': username,
                 'score': score,
                 'attempts': 1,
-                'rating': 0  # Rating logic can be added as needed
+                'rating': 0
             })
 
         leaderboard.sort(key=lambda x: (-x['score'], x['attempts']))
@@ -199,7 +195,7 @@ def check_answer():
 def get_leaderboard(question_type):
     with shelve.open(leaderboard_db) as db:
         leaderboard = db.get(f'leaderboard_{question_type}', [])
-    return jsonify(leaderboard[:10])  # Return the top 10 users
+    return jsonify(leaderboard[:10])
 
 @socketio.on('connect')
 def handle_connect():

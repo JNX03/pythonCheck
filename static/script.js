@@ -30,7 +30,6 @@ function updateQuestionDetails() {
             'example_input': '5',
             'example_output': '15'
         },
-        // Add more questions here...
     };
 
     const question = questions[questionType];
@@ -38,7 +37,7 @@ function updateQuestionDetails() {
     document.getElementById('example_input').innerHTML = `<strong>Input:</strong> ${question.example_input}`;
     document.getElementById('example_output').innerHTML = `<strong>Output:</strong> ${question.example_output}`;
     
-    fetchLeaderboard(questionType);  // Fetch the leaderboard for the selected question type
+    fetchLeaderboard(questionType);
 }
 
 function submitCode() {
